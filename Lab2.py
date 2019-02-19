@@ -31,7 +31,7 @@ def objective(alphas):
 	alph = 0
 	for i, ai in enumerate(alphas):
 		for j, aj in enumerate(alphas):
-			alph += ai * aj * targets[i] * targets[j] * kernel_polynomial(inputs[i], inputs[j], 4)
+			alph += ai * aj * targets[i] * targets[j] * kernel_linear(inputs[i], inputs[j])
 
 	alph /= 2
 	alph -= sum(alphas)
@@ -40,7 +40,7 @@ def objective(alphas):
 def zerofun(alpha):
 	tot = 0
 	for i, ai in enumerate(alpha):
-		tot += i * ai
+		tot += targets[i] * ai
 	return tot
 
 
@@ -49,18 +49,27 @@ B = [(0, C) for b in range(N)]
 XC = {'type': 'eq', 'fun': zerofun}
 ret = minimize (objective, start, bounds=B, constraints=XC)
 alpha = ret['x']
+success = ret ['success']
+if (success):
+	print("Minimize function was successfull :)")
+else:
+	print("Minimize function was not successfull :(")
 print(alpha)
 
+#xgrid = np.linspace(−5, 5)
+#ygrid = np.linspace(−4, 4)
 
+#grid = np.array([[indicator(x, y) for x in xgrid] for y in ygrid])
 
+plt.plot([p[0] for p in classA],
+		 [p[1] for p in classA],
+		 'b.')
+plt.plot([p[0] for p in classB],
+		 [p[1] for p in classB],
+		 'r.')
+plt.axis('equal') #Force same scale on both axes
 
+#plt.contour(xgrid, ygrid, grid, (−1.0, 0.0, 1.0), colors = ('red', 'black', 'blue'), linewidths = (1, 3, 1))
 
-# plt.plot([p[0] for p in classA],
-# 		 [p[1] for p in classA],
-# 		 ’b. ’)
-# plt.plot([p[0] for p in classB],
-# 		 [p[1] for p in classB],
-# 		 ’r. ’)
-# plt.axis(’equal’) #Force same scale on both axes
-# plt.savefig(’svmplot.pdf’) #Save a copy in a file
-# plt.show() #Show the plot on the screen
+plt.savefig('svmplot.pdf') #Save a copy in a file
+plt.show() #Show the plot on the screen
