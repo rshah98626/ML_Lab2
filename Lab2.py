@@ -5,8 +5,11 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
 
-def kerlel_linear():
-	return
+def kernel_linear(x, y):
+	return np.transpose(x) @ y
+
+def kernel_polynomial(x, y, degree):
+	return (np.transpose(x) @ y + 1) ** degree
 
 def objective(alphas):
 	ret = 0
