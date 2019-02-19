@@ -4,7 +4,7 @@ import math
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
-np.random.seed(100)
+#np.random.seed(100)
 classA = np.concatenate( (np.random.randn(10, 2) * 0.2 + [1.5, 0.5], np.random.randn(10, 2) * 0.2 + [-1.5, .5]) )
 classB = np.random.randn(20, 2) * 0.2 + [0.0, -0.5]
 inputs = np.concatenate (( classA , classB ))
@@ -31,7 +31,7 @@ def objective(alphas):
 	alph = 0
 	for i, ai in enumerate(alphas):
 		for j, aj in enumerate(alphas):
-			alph += ai * aj * targets[i] * targets[j] * kernel_polynomial(inputs[i], inputs[j], 4)
+			alph += ai * aj * targets[i] * targets[j] * kernel_linear(inputs[i], inputs[j])
 
 	alph /= 2
 	alph -= sum(alphas)
@@ -44,13 +44,24 @@ def zerofun(alpha):
 	return tot
 
 
-start = np.zeros(N) #Initial guess of the alpha-vector
+start = np.zeros(N) # Initial guess of the alpha-vector
 B = [(0, C) for b in range(N)]
 XC = {'type': 'eq', 'fun': zerofun}
 ret = minimize (objective, start, bounds=B, constraints=XC)
 alpha = ret['x']
+
+print(ret['success'])
 print(alpha)
 
+non_zero_alpha = []
+for index, value in enumerate(alpha):
+	if value > 10 ** (-5):
+		non_zero_alpha.append((inputs[index], targets[index], value))
+
+bias = 0
+for entry in non_zero_alpha:
+	for i, ai in enumerate(alpha):
+		bias
 
 
 
