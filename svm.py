@@ -6,7 +6,7 @@ from tabulate import tabulate
 
 
 class SVM:
-    def __init__(self, classA, classB, C=3.0):
+    def __init__(self, classA, classB, C=0.1):
         self.inputs = np.concatenate((classA, classB))
         self.targets = np.concatenate((np.ones(classA.shape[0]), -np.ones(classB.shape[0])))
 
@@ -18,6 +18,12 @@ class SVM:
         random.shuffle(permute)
         self.inputs = self.inputs[permute, :]
         self.targets = self.targets[permute]
+
+        # Calculate helper variable P (used for
+        self.P = np.transpose(np.matrix(self.targets)) * self.targets
+        for i in range(self.P.shape[0]):
+            for j in range(self.P.shape[1]):
+                self.P[i, j] *= self.kernel_caller(self.inputs[i], self.inputs[j])
 
         start = np.zeros(N)  # Initial guess of the alpha-vector
         B = [(0, C) for b in range(N)]
@@ -43,16 +49,21 @@ class SVM:
         # First: find support vector. This "corresponds to any point with an α-value larger than zero, but less than C"
         sv = 0
         for i, entry in enumerate(self.non_zero_alpha):
-            if entry[2] < C:
+            if entry[2] < C - 10 ** (-5):
+                print(entry[2], "<", C - 10 ** (-5))
                 sv = i
                 break
 
         # Now calulate bias:
         self.bias = 0
         for entry in self.non_zero_alpha:
-            self.bias += entry[2] * entry[1] * self.kernel_linear(self.non_zero_alpha[sv][0], entry[0])
+            self.bias += entry[2] * entry[1] * self.kernel_caller(self.non_zero_alpha[sv][0], entry[0])
         self.bias -= self.non_zero_alpha[sv][1]
         print("Calculated bias:", self.bias)
+
+    # The kernel caller function is used to specify, which kernel & kernel parameters should be used:
+    def kernel_caller(self, x, y):
+        return self.kernel_polynomial(x, y, 2)
 
     def kernel_linear(self, x, y):
         return np.transpose(x) @ y
@@ -64,10 +75,9 @@ class SVM:
         return math.exp(-np.linalg.norm(x - y, 2) / (2 * (sigma ** 2)))
 
     def objective(self, alphas):
-        alph = 0
-        for i, ai in enumerate(alphas):
-            for j, aj in enumerate(alphas):
-                alph += ai * aj * self.targets[i] * self.targets[j] * self.kernel_linear(self.inputs[i], self.inputs[j])
+        alph = np.dot(self.P, np.transpose(alphas))
+        alph = np.dot(alphas, np.transpose(alph))
+
         alph /= 2
         alph -= sum(alphas)
         return alph
@@ -78,6 +88,6 @@ class SVM:
     def indicator(self, x, y):
         ind = 0
         for entry in self.non_zero_alpha:
-            ind += entry[2] * entry[1] * self.kernel_linear([x, y], entry[0])
+            ind += entry[2] * entry[1] * self.kernel_caller([x, y], entry[0])
         ind -= self.bias
         return ind
