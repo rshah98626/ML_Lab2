@@ -51,7 +51,7 @@ class SVM:
         self.bias = 0
         for entry in self.non_zero_alpha:
             self.bias += entry[2] * entry[1] * self.kernel_linear(self.non_zero_alpha[sv][0], entry[0])
-            self.bias -= self.non_zero_alpha[sv][1]
+        self.bias -= self.non_zero_alpha[sv][1]
         print("Calculated bias:", self.bias)
 
     def kernel_linear(self, x, y):
