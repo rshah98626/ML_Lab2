@@ -137,6 +137,8 @@ class SVM:
         plt.plot([p[0] for p in self.plotting_classA_SV], [p[1] for p in self.plotting_classA_SV], 'b+', markersize=12)
         plt.plot([p[0] for p in self.plotting_classB_SV], [p[1] for p in self.plotting_classB_SV], 'r+', markersize=12)
         plt.axis('equal')  # Force same scale on both axes
+        plt.xlabel('x1')
+        plt.ylabel('x2')
 
         xgrid = np.linspace(-5, 5)
         ygrid = np.linspace(-4, 4)
@@ -145,5 +147,5 @@ class SVM:
         plt.contour(xgrid, ygrid, grid, (-1, 1), colors='green', linewidths=1, linestyles='dashed')
 
         if self.filename:
-            plt.savefig('figures/' + self.filename + '.pdf')  # Save a copy in a file
+            plt.savefig('figures/' + self.filename + '.jpg')  # Save a copy in a file
         plt.show()  # Show the plot on the screen
