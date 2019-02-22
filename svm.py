@@ -3,14 +3,19 @@ import random
 import math
 from scipy.optimize import minimize
 from tabulate import tabulate
+import matplotlib.pyplot as plt
 
 
 class SVM:
-    def __init__(self, classA, classB, C=0.1):
+    def __init__(self, classA, classB, C=0.1, filename='', kernel='linear', sigma=1.0, degree=3):
         self.inputs = np.concatenate((classA, classB))
         self.targets = np.concatenate((np.ones(classA.shape[0]), -np.ones(classB.shape[0])))
 
         N = self.inputs.shape[0]  # Number of rows (samples)
+        self.filename = filename
+        self.kernel = kernel
+        self.degree = degree
+        self.sigma = sigma
         # C = 3.0
 
         # shuffle data
@@ -61,9 +66,17 @@ class SVM:
         self.bias -= self.non_zero_alpha[sv][1]
         print("Calculated bias:", self.bias)
 
+        self.calc_plot_points(classA, classB)
+        self.plotter(classA, classB)
+
     # The kernel caller function is used to specify, which kernel & kernel parameters should be used:
     def kernel_caller(self, x, y):
-        return self.kernel_polynomial(x, y, 2)
+        if self.kernel == 'linear':
+            return self.kernel_linear(x, y)
+        elif self.kernel == 'polynomial':
+            return self.kernel_polynomial(x, y, self.degree)
+        else:
+            return self.kernel_RBF(x, y, self.sigma)
 
     def kernel_linear(self, x, y):
         return np.transpose(x) @ y
@@ -91,3 +104,46 @@ class SVM:
             ind += entry[2] * entry[1] * self.kernel_caller([x, y], entry[0])
         ind -= self.bias
         return ind
+
+    def calc_plot_points(self, classA, classB):
+        self.plotting_classA = []
+        self.plotting_classB = []
+        self.plotting_classA_SV = []
+        self.plotting_classB_SV = []
+        for i, entry_i in enumerate(classA):
+            sv = False
+            for j, entry_j in enumerate(self.non_zero_alpha):
+                if np.array_equal(entry_i[0], entry_j[0][0]) & np.array_equal(entry_i[1], entry_j[0][1]):
+                    self.plotting_classA_SV.append(entry_i)
+                    sv = True
+                    break
+            if not sv:
+                self.plotting_classA.append(entry_i)
+
+        for i, entry_i in enumerate(classB):
+            sv = False
+            for j, entry_j in enumerate(self.non_zero_alpha):
+                if np.array_equal(entry_i[0], entry_j[0][0]) & np.array_equal(entry_i[1], entry_j[0][1]):
+                    self.plotting_classB_SV.append(entry_i)
+                    sv = True
+                    break
+            if not sv:
+                self.plotting_classB.append(entry_i)
+
+    def plotter(self, classA, classB):
+        # Plotting:
+        plt.plot([p[0] for p in classA], [p[1] for p in classA], 'b.')
+        plt.plot([p[0] for p in classB], [p[1] for p in classB], 'r.')
+        plt.plot([p[0] for p in self.plotting_classA_SV], [p[1] for p in self.plotting_classA_SV], 'b+', markersize=12)
+        plt.plot([p[0] for p in self.plotting_classB_SV], [p[1] for p in self.plotting_classB_SV], 'r+', markersize=12)
+        plt.axis('equal')  # Force same scale on both axes
+
+        xgrid = np.linspace(-5, 5)
+        ygrid = np.linspace(-4, 4)
+        grid = np.array([[self.indicator(x, y) for x in xgrid] for y in ygrid])
+        plt.contour(xgrid, ygrid, grid, 0, colors='black', linewidths=1)
+        plt.contour(xgrid, ygrid, grid, (-1, 1), colors='green', linewidths=1, linestyles='dashed')
+
+        if self.filename:
+            plt.savefig('figures/' + self.filename + '.pdf')  # Save a copy in a file
+        plt.show()  # Show the plot on the screen
